@@ -15,6 +15,18 @@ export interface Guest {
 
 export type GuestStatus = "pending" | "confirmed" | "declined";
 
+export interface GuestImportEntry {
+  name: string;
+  isCouple: boolean;
+  by?: string;
+}
+
+export interface GuestImportResult {
+  created: number;
+  skipped: number;
+  invalid: number;
+}
+
 export interface RSVPPayload {
   confirmed: boolean;
   couple_member_1: boolean;

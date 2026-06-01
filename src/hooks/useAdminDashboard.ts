@@ -1,6 +1,8 @@
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useRef, useState } from "react";
 import { useAdminGuests } from "@/hooks/useAdminGuests";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useGuestListUpload } from "@/hooks/useGuestListUpload";
+import { buildConfirmUrl } from "@/lib/confirm-url";
 import { getGuestTotalPeople } from "@/lib/guest";
 import { getGuestStatus } from "@/types";
 import type { Guest, GuestStatus } from "@/types";
@@ -62,6 +64,9 @@ const buildCsv = (rows: GuestRow[]): string => {
 export const useAdminDashboard = () => {
   const { guests, isLoading, isError, isFetching, refetch } = useAdminGuests();
   const { logout } = useAdminAuth();
+  const guestListUpload = useGuestListUpload();
+  const [copiedGuestId, setCopiedGuestId] = useState<string | null>(null);
+  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const rows = useMemo(
     () =>
@@ -106,6 +111,22 @@ export const useAdminDashboard = () => {
     URL.revokeObjectURL(url);
   }, [rows]);
 
+  const handleCopyInviteLink = useCallback(async (guestId: string) => {
+    try {
+      await navigator.clipboard.writeText(buildConfirmUrl(guestId));
+      setCopiedGuestId(guestId);
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current);
+      }
+      copyTimeoutRef.current = setTimeout(() => {
+        setCopiedGuestId(null);
+        copyTimeoutRef.current = null;
+      }, 2000);
+    } catch {
+      setCopiedGuestId(null);
+    }
+  }, []);
+
   return {
     rows,
     stats,
@@ -115,6 +136,9 @@ export const useAdminDashboard = () => {
     formatDate,
     handleRefresh,
     handleExportCsv,
+    handleCopyInviteLink,
+    copiedGuestId,
     logout,
+    ...guestListUpload,
   };
 };

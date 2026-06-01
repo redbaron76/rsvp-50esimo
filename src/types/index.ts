@@ -1,2 +1,8 @@
-export type { Guest, GuestStatus, RSVPPayload } from "./guest";
+export type {
+  Guest,
+  GuestImportEntry,
+  GuestImportResult,
+  GuestStatus,
+  RSVPPayload,
+} from "./guest";
 export { getGuestStatus, hasGuestResponded } from "./guest";

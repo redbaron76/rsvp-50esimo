@@ -1,0 +1,12 @@
+[
+  {
+    "name": "Giangi",
+    "isCouple": false,
+    "by": "Gabriele"
+  },
+  {
+    "name": "Mirco e Miriam",
+    "isCouple": true,
+    "by": "Fabio"
+  }
+]

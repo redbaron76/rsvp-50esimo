@@ -3,6 +3,7 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useAdminDashboard } from "@/hooks/useAdminDashboard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -16,10 +17,13 @@ import {
   LogOut,
   RefreshCw,
   Download,
+  Upload,
   Users,
   UserX,
   Clock,
   Loader2,
+  Copy,
+  Check,
 } from "lucide-react";
 import type { GuestStatus } from "@/types";
 
@@ -65,7 +69,16 @@ function DashboardContent() {
     formatDate,
     handleRefresh,
     handleExportCsv,
+    handleCopyInviteLink,
+    copiedGuestId,
     logout,
+    fileInputRef,
+    isUploading,
+    uploadProgress,
+    uploadError,
+    uploadResult,
+    handleUploadClick,
+    handleFileChange,
   } = useAdminDashboard();
 
   return (
@@ -152,7 +165,63 @@ function DashboardContent() {
             <Download className="mr-2 h-4 w-4" />
             Esporta CSV
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleUploadClick}
+            disabled={isUploading}
+          >
+            {isUploading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Upload className="mr-2 h-4 w-4" />
+            )}
+            Upload lista invitati
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json,application/json"
+            className="hidden"
+            onChange={handleFileChange}
+          />
         </div>
+
+        {isUploading && uploadProgress ? (
+          <div className="space-y-2 rounded-lg border bg-card p-4">
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-medium">Importazione invitati</span>
+              <span className="text-muted-foreground">
+                {uploadProgress.current} / {uploadProgress.total}
+              </span>
+            </div>
+            <Progress value={uploadProgress.percent} />
+            <p className="text-xs text-muted-foreground">
+              {uploadProgress.currentName
+                ? `Elaborazione: ${uploadProgress.currentName}`
+                : "Completamento..."}
+            </p>
+          </div>
+        ) : null}
+
+        {uploadError ? (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+            {uploadError}
+          </div>
+        ) : null}
+
+        {uploadResult ? (
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">
+            Importazione completata: {uploadResult.created}{" "}
+            {uploadResult.created === 1 ? "creato" : "creati"},{" "}
+            {uploadResult.skipped}{" "}
+            {uploadResult.skipped === 1 ? "già presente" : "già presenti"}
+            {uploadResult.invalid > 0
+              ? `, ${uploadResult.invalid} non validi`
+              : ""}
+            .
+          </div>
+        ) : null}
 
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
@@ -175,6 +244,7 @@ function DashboardContent() {
                   <TableHead>Stato</TableHead>
                   <TableHead className="text-center">Ospiti</TableHead>
                   <TableHead>Data conferma</TableHead>
+                  <TableHead>Copia link invito</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -207,6 +277,26 @@ function DashboardContent() {
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {formatDate(row.confirmedAt)}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-auto px-2 py-1 text-primary hover:text-primary"
+                          onClick={() => handleCopyInviteLink(row.id)}
+                        >
+                          {copiedGuestId === row.id ? (
+                            <>
+                              <Check className="mr-1.5 h-3.5 w-3.5" />
+                              Copiato!
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="mr-1.5 h-3.5 w-3.5" />
+                              Copia link
+                            </>
+                          )}
+                        </Button>
                       </TableCell>
                     </TableRow>
                   );
