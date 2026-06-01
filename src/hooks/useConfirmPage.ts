@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 
 import { useGuest } from "@/hooks/useGuest";
 
-const DEFAULT_TITLE = "Festa di Compleanno — 11 Luglio 2026";
+const DEFAULT_TITLE =
+  "Red, Mari e Kiki fanno 50 anni! Festa Sabato 11 Luglio 2026";
 
 export const useConfirmPage = (id: string) => {
   const { data: guest, isLoading, notFound } = useGuest(id);
