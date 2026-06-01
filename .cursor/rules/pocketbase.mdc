@@ -1,0 +1,58 @@
+---
+globs: ["**/api/**", "**/lib/pb*", "**/hooks/use*"]
+alwaysApply: false
+---
+
+# PocketBase — Schema e Accesso Dati
+
+## Configurazione client
+
+```typescript
+// src/lib/pb.ts
+import PocketBase from "pocketbase";
+export const pb = new PocketBase(import.meta.env.VITE_API_BASE_URL);
+```
+
+Variabile d'ambiente: `VITE_API_BASE_URL=https://bocce-api.bisiacaria.com`
+
+## Collections
+
+### `birth_guests` (invitati)
+
+| Campo        | Tipo     | Note                                 |
+| ------------ | -------- | ------------------------------------ |
+| id           | string   | auto (PB)                            |
+| name         | string   | nome completo invitato               |
+| id           | string   | UUID PocketBase — usato nell'URL `/confirm/:id` |
+| confirmed    | bool     | null=non risposto, true=sì, false=no |
+| isCouple         | bool     | invito per una coppia (nome tipo "Paolo e Francesca") |
+| couple_member_1  | bool     | primo membro della coppia partecipa (solo se isCouple) |
+| couple_member_2  | bool     | secondo membro della coppia partecipa (solo se isCouple) |
+| kids_count       | number   | numero di figli/bambini portati      |
+| confirmed_at | datetime | timestamp conferma                   |
+
+### `birth_admin_users` (organizzatori)
+
+Usa l'auth nativa di PocketBase (collection `users`).
+Credenziali gestite dal pannello PocketBase admin.
+
+## Pattern fetch con TanStack Query
+
+```typescript
+// Recupera guest by id (UUID)
+const { data: guest } = useQuery({
+  queryKey: ["guest", id],
+  queryFn: () => pb.collection("birth_guests").getOne(id),
+});
+
+// Aggiorna RSVP
+const mutation = useMutation({
+  mutationFn: (data: RSVPData) => pb.collection("guests").update(guestId, data),
+});
+```
+
+## Regole
+
+- Non esporre mai credenziali admin nel client
+- L'area /admin usa `pb.authStore` con login PocketBase
+- L'id nell'URL è solo per lookup, non è una session key

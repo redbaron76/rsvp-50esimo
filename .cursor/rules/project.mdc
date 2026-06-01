@@ -1,0 +1,42 @@
+---
+description: Contesto generale del progetto birthday-confirm
+globs:
+alwaysApply: true
+---
+
+# Birthday Confirm — App RSVP Compleanno
+
+## Scopo
+
+Applicazione per gestire le conferme degli invitati alla festa di compleanno
+di tre festeggiati. Gli invitati ricevono un link personalizzato
+(/confirm/:id, UUID del record) e confermano la partecipazione con numero di ospiti.
+
+## Evento
+
+- **Data**: 11 Luglio 2026, ore 18:00
+- **Luogo**: Bar ACLI, Ronchi dei Legionari
+- **Festeggiati**: 3 persone (foto in home page)
+
+## Funzionalità principali
+
+1. Home page con stile festa, foto festeggiati, data/luogo evento
+2. Link personalizzato per invitato → popover RSVP si apre in automatico
+3. Popover: conferma presenza (sì/no) + numero ospiti aggiuntivi
+4. Contatore partecipanti confermati visibile in home
+5. Area riservata organizzatori (/admin) con lista conferme/rifiuti
+
+## Lingua
+
+Tutta la UI è in **italiano**.
+
+## Deployment
+
+- Docker Compose esistente (non modificare docker-compose.yml senza chiedere)
+- PocketBase come backend (istanza già in esecuzione)
+- Ambiente di sviluppo: Bun + Vite dev server
+
+## Documento di riferimento
+
+Il PRD completo con checklist è in `docs/PRD.md`.
+Leggilo sempre prima di iniziare un task.

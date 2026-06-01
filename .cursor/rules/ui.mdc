@@ -1,0 +1,41 @@
+---
+description: Linee guida UI, tema festa e componenti specifici
+globs: ["**/*.tsx", "**/*.css"]
+alwaysApply: false
+---
+
+# UI Guidelines — Tema Festa
+
+## Palette colori (definita in src/index.css con @theme)
+
+- Primario: giallo caldo / oro festa
+- Accento: rosa o corallo
+- Background: bianco caldo o crema
+- Font display: Google Fonts "Pacifico" o "Playfair Display" per i titoli
+- Font body: "Nunito" o "Poppins"
+
+## Home page — sezioni obbligatorie
+
+1. **Hero**: foto 3 festeggiati, titolo festa, data e luogo
+2. **Contatore**: partecipanti confermati (aggiornato real-time o on-load)
+3. **CTA**: pulsante "Conferma la tua presenza" (apre popover RSVP)
+
+## Componente RSVPPopover
+
+- Usa `<Popover>` o `<Dialog>` di shadcn/ui
+- Si apre **automaticamente** se la route contiene un id invito valido
+- Stato: presenza (sì/no) + numero ospiti (0–10, stepper o select)
+- Dopo submit: messaggio di conferma animato, popover si chiude
+
+## Area Admin (/admin)
+
+- Login semplice (email + password via PocketBase auth)
+- Tabella invitati: nome, stato, ospiti, data conferma
+- Badge colorati: confermato (verde) / rifiutato (rosso) / in attesa (grigio)
+- Export CSV opzionale
+
+## Accessibilità
+
+- Tutti i form hanno label
+- Focus management nel popover (trap focus)
+- Messaggi di errore espliciti

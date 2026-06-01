@@ -1,0 +1,50 @@
+---
+description: Stack tecnologico, convenzioni e pattern da seguire
+globs: ["**/*.ts", "**/*.tsx"]
+alwaysApply: true
+---
+
+# Stack e Convenzioni
+
+## Runtime & Build
+
+- **Bun** come package manager e runtime (mai usare npm/yarn/pnpm)
+- **Vite** come bundler
+- **TypeScript** strict mode
+
+## Framework
+
+- **TanStack Start** (SSR/file-based routing)
+- **TanStack Form** per la gestione dei form via useForm
+- **TanStack Router** file-based: le route vanno in `src/routes/`
+- Convenzione file route:
+  - `src/routes/index.tsx` → /
+  - `src/routes/confirm.$id.tsx` → /confirm/:id
+  - `src/routes/admin.tsx` → /admin
+  - `src/routes/__root.tsx` → layout root
+
+## UI
+
+- **Tailwind CSS v4** — NO tailwind.config.js, configurazione via CSS (@theme in index.css)
+- **shadcn/ui** — componenti già installati, NON reinstallare
+- Importa sempre i componenti da `@/components/ui/`
+- Usa `cn()` da `@/lib/utils` per classi condizionali
+
+## Stato & Data Fetching
+
+- **TanStack Query** per fetch e cache
+- **Zustand** per stato UI locale se necessario
+- I loader delle route TanStack Start per dati SSR
+
+## Convenzioni codice
+
+- Componenti: PascalCase, file `.tsx`
+- Hooks custom: `use` prefix, file in `src/hooks/`
+- Tipi/interfacce: in `src/types/` o colocati nel file
+- Niente `any`, niente `// @ts-ignore`
+- Preferisci `const` e arrow functions
+- Gestione errori esplicita (no silent catch)
+
+## Alias path
+
+- `@/` → `src/`

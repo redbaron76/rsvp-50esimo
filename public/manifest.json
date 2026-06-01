@@ -1,0 +1,15 @@
+{
+  "short_name": "Festa 🎉",
+  "name": "Festa di Compleanno — 11 Luglio 2026",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#FF6B9D",
+  "background_color": "#FFF8F0"
+}

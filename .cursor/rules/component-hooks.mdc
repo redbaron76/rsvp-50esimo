@@ -1,0 +1,56 @@
+---
+description: Separazione netta tra logica e presentazione nei componenti React
+alwaysApply: true
+---
+
+# Componenti puri + Hook di logica
+
+## Regola
+
+Ogni componente React deve essere **puramente presentazionale**: solo JSX, props e binding.
+Tutta la business logic (stato, effetti, handler, valori derivati, chiamate API) va in un **hook custom dedicato** nella cartella `src/hooks/`.
+
+## Pattern
+
+```tsx
+// ✅ CORRETTO — hook contiene tutta la logica
+// src/hooks/useFeature.ts
+export const useFeature = (options: Options) => {
+  const [state, setState] = useState(...)
+  const derived = useMemo(...)
+  const handleAction = () => { ... }
+  return { state, derived, handleAction }
+}
+
+// src/components/Feature.tsx
+export const Feature = (props: Props) => {
+  const { state, derived, handleAction } = useFeature(props)
+  return <div>...</div> // solo JSX
+}
+```
+
+```tsx
+// ❌ SBAGLIATO — logica nel componente
+export const Feature = (props: Props) => {
+  const [state, setState] = useState(...)
+  useEffect(() => { ... }, [...])
+  const handleAction = () => { ... }
+  return <div>...</div>
+}
+```
+
+## Cosa va nell'hook
+
+- `useState`, `useEffect`, `useMemo`, `useCallback`
+- Handler di eventi (submit, click, change)
+- Valori derivati e computazioni
+- Chiamate a mutation/query (TanStack Query)
+- Gestione step/flow multi-fase
+- Timer, auto-close, reset
+
+## Cosa resta nel componente
+
+- JSX e struttura DOM
+- Classi CSS e styling (`cn()`, `className`)
+- Binding di props agli elementi (`onClick={handler}`, `value={state}`)
+- Import di componenti UI (`Button`, `Dialog`, ecc.)
