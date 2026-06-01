@@ -23,7 +23,10 @@ export interface RSVPPayload {
   confirmed_at: string;
 }
 
+export const hasGuestResponded = (guest: Guest): boolean =>
+  guest.confirmed_at !== null && guest.confirmed_at !== "";
+
 export const getGuestStatus = (guest: Guest): GuestStatus => {
-  if (guest.confirmed === null) return "pending";
+  if (!hasGuestResponded(guest)) return "pending";
   return guest.confirmed ? "confirmed" : "declined";
 };

@@ -10,7 +10,7 @@ import {
   getGuestTotalPeople,
   parseCoupleNames,
 } from "@/lib/guest";
-import type { Guest, RSVPPayload } from "@/types";
+import { hasGuestResponded, type Guest, type RSVPPayload } from "@/types";
 
 export type RSVPStep = "summary" | "choose" | "details" | "decline-confirm";
 
@@ -28,8 +28,7 @@ interface UseRSVPOptions {
 
 export const useRSVP = ({ guest, open, onOpenChange }: UseRSVPOptions) => {
   const queryClient = useQueryClient();
-  const hasAlreadyResponded =
-    guest.confirmed_at !== null && guest.confirmed_at !== "";
+  const hasAlreadyResponded = hasGuestResponded(guest);
 
   const [step, setStep] = useState<RSVPStep>(
     hasAlreadyResponded ? "summary" : "choose",
