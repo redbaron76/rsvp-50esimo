@@ -24,8 +24,12 @@ import {
   Loader2,
   Copy,
   Check,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
 } from "lucide-react";
 import type { GuestStatus } from "@/types";
+import type { GuestSortColumn, GuestSortDirection } from "@/hooks/useAdminDashboard";
 
 export const Route = createFileRoute("/admin/dashboard")({
   component: AdminDashboard,
@@ -49,6 +53,43 @@ const statusConfig: Record<
   },
 };
 
+function SortableTableHead({
+  label,
+  column,
+  sortColumn,
+  sortDirection,
+  onSort,
+}: {
+  label: string;
+  column: GuestSortColumn;
+  sortColumn: GuestSortColumn | null;
+  sortDirection: GuestSortDirection;
+  onSort: (column: GuestSortColumn) => void;
+}) {
+  const isActive = sortColumn === column;
+
+  return (
+    <TableHead>
+      <button
+        type="button"
+        className="inline-flex items-center gap-1.5 font-medium transition-colors hover:text-foreground"
+        onClick={() => onSort(column)}
+      >
+        {label}
+        {isActive ? (
+          sortDirection === "asc" ? (
+            <ArrowUp className="h-3.5 w-3.5" />
+          ) : (
+            <ArrowDown className="h-3.5 w-3.5" />
+          )
+        ) : (
+          <ArrowUpDown className="h-3.5 w-3.5 opacity-40" />
+        )}
+      </button>
+    </TableHead>
+  );
+}
+
 function AdminDashboard() {
   const { isAuthenticated } = useAdminAuth();
 
@@ -71,6 +112,9 @@ function DashboardContent() {
     handleExportCsv,
     handleCopyInviteLink,
     copiedGuestId,
+    sortColumn,
+    sortDirection,
+    handleSort,
     logout,
     fileInputRef,
     isUploading,
@@ -213,11 +257,17 @@ function DashboardContent() {
         {uploadResult ? (
           <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">
             Importazione completata: {uploadResult.created}{" "}
-            {uploadResult.created === 1 ? "creato" : "creati"},{" "}
-            {uploadResult.skipped}{" "}
+            {uploadResult.created === 1 ? "creato" : "creati"}
+            {uploadResult.updated > 0
+              ? `, ${uploadResult.updated} ${uploadResult.updated === 1 ? "aggiornato" : "aggiornati"}`
+              : ""}
+            , {uploadResult.skipped}{" "}
             {uploadResult.skipped === 1 ? "già presente" : "già presenti"}
             {uploadResult.invalid > 0
               ? `, ${uploadResult.invalid} non validi`
+              : ""}
+            {uploadResult.failed > 0
+              ? `, ${uploadResult.failed} ${uploadResult.failed === 1 ? "fallito" : "falliti"}`
               : ""}
             .
           </div>
@@ -240,7 +290,20 @@ function DashboardContent() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome</TableHead>
+                  <SortableTableHead
+                    label="Nome"
+                    column="name"
+                    sortColumn={sortColumn}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  />
+                  <SortableTableHead
+                    label="By"
+                    column="by"
+                    sortColumn={sortColumn}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                  />
                   <TableHead>Stato</TableHead>
                   <TableHead className="text-center">Ospiti</TableHead>
                   <TableHead>Data conferma</TableHead>
@@ -254,6 +317,9 @@ function DashboardContent() {
                     <TableRow key={row.id}>
                       <TableCell className="font-medium">
                         {row.name}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {row.by || "—"}
                       </TableCell>
                       <TableCell>
                         <Badge
@@ -282,7 +348,7 @@ function DashboardContent() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-auto px-2 py-1 text-primary hover:text-primary"
+                          className="h-auto px-2 py-1 text-primary hover:bg-primary/10 hover:text-accent"
                           onClick={() => handleCopyInviteLink(row.id)}
                         >
                           {copiedGuestId === row.id ? (

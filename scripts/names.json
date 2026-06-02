@@ -1,12 +1,22 @@
 [
   {
+    "name": "Test",
+    "isCouple": false,
+    "by": "Red"
+  },
+  {
+    "name": "Paolo e Francesca",
+    "isCouple": true,
+    "by": "Red"
+  },
+  {
     "name": "Giangi",
     "isCouple": false,
-    "by": "Gabriele"
+    "by": "Kiki"
   },
   {
     "name": "Mirco e Miriam",
     "isCouple": true,
-    "by": "Fabio"
+    "by": "Mari"
   }
 ]

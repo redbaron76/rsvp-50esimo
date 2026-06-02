@@ -10,10 +10,14 @@ import type { Guest, GuestStatus } from "@/types";
 interface GuestRow {
   id: string;
   name: string;
+  by: string;
   status: GuestStatus;
   totalPeople: number;
   confirmedAt: string | null;
 }
+
+export type GuestSortColumn = "name" | "by";
+export type GuestSortDirection = "asc" | "desc";
 
 const STATUS_ORDER: Record<GuestStatus, number> = {
   confirmed: 0,
@@ -40,6 +44,7 @@ const toGuestRow = (guest: Guest): GuestRow => {
   return {
     id: guest.id,
     name: guest.name,
+    by: guest.by ?? "",
     status,
     totalPeople,
     confirmedAt: guest.confirmed_at,
@@ -66,15 +71,28 @@ export const useAdminDashboard = () => {
   const { logout } = useAdminAuth();
   const guestListUpload = useGuestListUpload();
   const [copiedGuestId, setCopiedGuestId] = useState<string | null>(null);
+  const [sortColumn, setSortColumn] = useState<GuestSortColumn | null>(null);
+  const [sortDirection, setSortDirection] = useState<GuestSortDirection>("asc");
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const rows = useMemo(
-    () =>
-      guests
-        .map(toGuestRow)
-        .sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status]),
-    [guests],
-  );
+  const rows = useMemo(() => {
+    const mapped = guests.map(toGuestRow);
+
+    if (sortColumn) {
+      return [...mapped].sort((a, b) => {
+        const aValue = sortColumn === "name" ? a.name : a.by;
+        const bValue = sortColumn === "name" ? b.name : b.by;
+        const comparison = aValue.localeCompare(bValue, "it", {
+          sensitivity: "base",
+        });
+        return sortDirection === "asc" ? comparison : -comparison;
+      });
+    }
+
+    return mapped.sort(
+      (a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status],
+    );
+  }, [guests, sortColumn, sortDirection]);
 
   const stats = useMemo(() => {
     let confirmed = 0;
@@ -127,9 +145,24 @@ export const useAdminDashboard = () => {
     }
   }, []);
 
+  const handleSort = useCallback(
+    (column: GuestSortColumn) => {
+      if (sortColumn === column) {
+        setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
+        return;
+      }
+      setSortColumn(column);
+      setSortDirection("asc");
+    },
+    [sortColumn],
+  );
+
   return {
     rows,
     stats,
+    sortColumn,
+    sortDirection,
+    handleSort,
     isLoading,
     isError,
     isFetching,

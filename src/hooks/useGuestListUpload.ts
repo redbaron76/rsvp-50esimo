@@ -1,8 +1,14 @@
 import { useCallback, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
-import { importGuestEntry } from "@/apis/guests";
-import type { GuestImportEntry, GuestImportResult } from "@/types";
+import { getImportErrorMessage, importGuestEntry } from "@/apis/guests";
+import { pb } from "@/lib/pb";
+import {
+  GUEST_INVITED_BY_VALUES,
+  isGuestInvitedBy,
+  type GuestImportEntry,
+  type GuestImportResult,
+} from "@/types";
 
 export interface GuestUploadProgress {
   current: number;
@@ -13,8 +19,10 @@ export interface GuestUploadProgress {
 
 const emptyResult = (): GuestImportResult => ({
   created: 0,
+  updated: 0,
   skipped: 0,
   invalid: 0,
+  failed: 0,
 });
 
 const isGuestImportEntry = (value: unknown): value is GuestImportEntry => {
@@ -23,7 +31,7 @@ const isGuestImportEntry = (value: unknown): value is GuestImportEntry => {
   return (
     typeof entry.name === "string" &&
     typeof entry.isCouple === "boolean" &&
-    (entry.by === undefined || typeof entry.by === "string")
+    isGuestInvitedBy(entry.by)
   );
 };
 
@@ -37,7 +45,7 @@ const parseGuestImportFile = (raw: string): GuestImportEntry[] => {
   }
   if (!parsed.every(isGuestImportEntry)) {
     throw new Error(
-      "Formato non valido. Ogni invitato deve avere name (string) e isCouple (boolean).",
+      `Formato non valido. Ogni invitato deve avere name (string), isCouple (boolean) e by (${GUEST_INVITED_BY_VALUES.join(", ")}).`,
     );
   }
   return parsed;
@@ -45,35 +53,38 @@ const parseGuestImportFile = (raw: string): GuestImportEntry[] => {
 
 const processGuestEntries = async (
   entries: GuestImportEntry[],
-  index: number,
-  result: GuestImportResult,
   onProgress: (progress: GuestUploadProgress) => void,
-): Promise<GuestImportResult> => {
-  if (index >= entries.length) {
+): Promise<{ result: GuestImportResult; lastError: string | null }> => {
+  const result = emptyResult();
+  let lastError: string | null = null;
+
+  for (let index = 0; index < entries.length; index++) {
+    const entry = entries[index];
+
     onProgress({
-      current: entries.length,
+      current: index,
       total: entries.length,
-      percent: 100,
-      currentName: null,
+      percent: Math.round((index / entries.length) * 100),
+      currentName: entry.name.trim() || null,
     });
-    return result;
+
+    try {
+      const status = await importGuestEntry(entry);
+      result[status] += 1;
+    } catch (error) {
+      result.failed += 1;
+      lastError = getImportErrorMessage(error);
+    }
   }
 
-  const entry = entries[index];
   onProgress({
-    current: index,
+    current: entries.length,
     total: entries.length,
-    percent: Math.round((index / entries.length) * 100),
-    currentName: entry.name.trim() || null,
+    percent: 100,
+    currentName: null,
   });
 
-  const status = await importGuestEntry(entry);
-  const nextResult: GuestImportResult = {
-    ...result,
-    [status]: result[status] + 1,
-  };
-
-  return processGuestEntries(entries, index + 1, nextResult, onProgress);
+  return { result, lastError };
 };
 
 export const useGuestListUpload = () => {
@@ -98,6 +109,11 @@ export const useGuestListUpload = () => {
       const file = event.target.files?.[0];
       event.target.value = "";
       if (!file) return;
+
+      if (!pb.authStore.isValid) {
+        setUploadError("Sessione scaduta. Effettua di nuovo il login.");
+        return;
+      }
 
       setUploadError(null);
       setUploadResult(null);
@@ -127,17 +143,28 @@ export const useGuestListUpload = () => {
       });
 
       try {
-        const result = await processGuestEntries(
+        const { result, lastError } = await processGuestEntries(
           entries,
-          0,
-          emptyResult(),
           setUploadProgress,
         );
+
         setUploadResult(result);
-        setUploadError(null);
-        await queryClient.invalidateQueries({ queryKey: ["admin-guests"] });
-      } catch {
-        setUploadError("Errore durante l'importazione. Riprova.");
+
+        if (result.failed > 0) {
+          setUploadError(
+            lastError
+              ? `Importazione parziale: ${result.failed} ${result.failed === 1 ? "errore" : "errori"}. Ultimo errore: ${lastError}`
+              : `Importazione parziale: ${result.failed} ${result.failed === 1 ? "errore" : "errori"}.`,
+          );
+        } else {
+          setUploadError(null);
+        }
+
+        if (result.created > 0 || result.updated > 0) {
+          await queryClient.invalidateQueries({ queryKey: ["admin-guests"] });
+        }
+      } catch (error) {
+        setUploadError(getImportErrorMessage(error));
         setUploadResult(null);
       } finally {
         setIsUploading(false);
